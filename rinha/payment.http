@@ -1,0 +1,12 @@
+### Post a payment
+POST http://localhost:5118/payments
+Content-Type: application/json
+
+{
+  "correlationId": "0926d723-38ad-4889-ac02-3cc44b3f900b",
+  "amount": 100
+}
+
+### Get the payments summary
+GET http://localhost:5118/payments-summary?from=2025-07-30T16:43:48.185Z&to=2025-08-30T16:43:58.085Z
+

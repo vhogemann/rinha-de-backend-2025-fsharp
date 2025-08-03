@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Model.fs" />
+        <Compile Include="Persistence.fs" />
+        <Compile Include="Client.fs" />
+        <Compile Include="Gateway.fs" />
+        <Compile Include="Program.fs"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Donald" Version="10.1.0" />
+      <PackageReference Include="Falco" Version="5.0.2" />
+      <PackageReference Include="FsHttp" Version="15.0.1" />
+      <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.7" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
+      <Content Include="Dockerfile" />
+      <Content Update="appsettings.Development.json">
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+</Project>
