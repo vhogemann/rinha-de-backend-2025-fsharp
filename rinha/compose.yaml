@@ -1,9 +1,9 @@
 ﻿services:
   api:
-    image: api
-    build:
-      context: .
-      dockerfile: Api/Dockerfile
+    image: vhogemann/rinha-de-backend-2025-fsharp:latest
+#    build:
+#      context: .
+#      dockerfile: Api/Dockerfile
     ports:
         - "9999:8080"
     networks:
