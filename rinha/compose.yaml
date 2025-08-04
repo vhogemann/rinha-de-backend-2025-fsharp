@@ -1,19 +1,84 @@
 ﻿services:
-  api:
-    image: vhogemann/rinha-de-backend-2025-fsharp:latest
-#    build:
-#      context: .
-#      dockerfile: Api/Dockerfile
+  api1:
+#    image: vhogemann/rinha-de-backend-2025-fsharp:latest
+    build:
+      context: .
+      dockerfile: Api/Dockerfile
     ports:
-        - "9999:8080"
+        - "8081:8080"
+    depends_on:
+      - postgres
     networks:
       - backend
       - payment-processor
     deploy:
       resources:
         limits:
-          cpus: "1.5"
-          memory: "350MB"
+          cpus: "0.5"
+          memory: "50MB"
+  api2:
+#    image: vhogemann/rinha-de-backend-2025-fsharp:latest
+    build:
+      context: .
+      dockerfile: Api/Dockerfile
+    ports:
+        - "8082:8080"
+    depends_on:
+      - postgres
+    networks:
+      - backend
+      - payment-processor
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "50MB"
+  postgres:
+    # Banco de dados
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-d", "postgres" ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    expose:
+      - "5432"
+    ports:
+      - 9998:5432
+    volumes:
+      - ./bootstrap.sql:/docker-entrypoint-initdb.d/bootstrap.sql
+    networks:
+        - backend
+        - payment-processor
+    deploy:
+      resources:
+        limits:
+          cpus: '1.1'
+          memory: '340MB'
+  nginx:
+    # Load Balancer
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api1
+      - api2
+    ports:
+      - "9999:9999"
+    networks:
+      - backend
+      - payment-processor
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: '10MB'
 networks:
   backend:
     driver: bridge

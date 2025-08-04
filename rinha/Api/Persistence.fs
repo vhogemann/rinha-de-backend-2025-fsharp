@@ -7,24 +7,6 @@ open System.Data
 
 module Persistence =
     open Donald
-    
-    let bootstrap (conn: IDbConnection) =
-        let sql = """
-        CREATE TABLE IF NOT EXISTS transactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            correlation_id GUID NOT NULL UNIQUE,
-            gateway TEXT NOT NULL,
-            amount INTEGER NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-        
-        CREATE INDEX IF NOT EXISTS idx_gateway ON transactions (gateway);
-        CREATE INDEX IF NOT EXISTS idx_created_at ON transactions (created_at);
-        """
-        conn
-        |> Db.newCommand sql
-        |> Db.Async.exec
-
     let savePayment (conn:IDbConnection) (gateway:string) (request: GatewayPaymentRequest) =
         let sql = """
         INSERT INTO transactions (gateway, correlation_id, amount, created_at)
@@ -35,7 +17,7 @@ module Persistence =
             [ "@Gateway", sqlString gateway
               "@CorrelationId", sqlGuid request.correlationId
               "@Amount", sqlInt64 (request.amount * 100M)
-              "@CreatedAt", sqlDateTime request.requestedAt ]
+              "@CreatedAt", sqlDateTime (request.requestedAt.ToUniversalTime()) ]
         
         conn
         |> Db.newCommand sql
@@ -79,8 +61,8 @@ module Persistence =
         """
         
         let parameters = 
-            [ "@Start", sqlDateTime start
-              "@Finish", sqlDateTime finish ]
+            [ "@Start", sqlDateTime (start.ToUniversalTime())
+              "@Finish", sqlDateTime (finish.ToUniversalTime()) ]
         task {
             let! result =
                 conn
@@ -90,15 +72,11 @@ module Persistence =
             return resultToSummaryResponse result
         }
 type IPersistence =
-    abstract member Bootstrap: unit -> Async<unit>
     abstract member SavePayment: string * GatewayPaymentRequest -> Async<unit>
     abstract member GetPaymentsSummary: DateTime * DateTime -> Async<PaymentsSummaryResponse>
 
 type Persistence (logger: ILogger<Persistence>, dbconn: IDbConnection) =
     interface IPersistence with
-        member _.Bootstrap() =
-            logger.LogInformation("bootstrapping database")
-            Persistence.bootstrap dbconn |> Async.AwaitTask
         member _.SavePayment(gateway: string, request: GatewayPaymentRequest) =
             Persistence.savePayment dbconn gateway request |> Async.AwaitTask
         member _.GetPaymentsSummary(start: DateTime, finish: DateTime) =

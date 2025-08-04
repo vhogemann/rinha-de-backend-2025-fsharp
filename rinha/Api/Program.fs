@@ -57,11 +57,10 @@ let main args =
     builder
         .Services
         .AddLogging()
-        .AddTransient<IDbConnection>(fun _ -> new SqliteConnection(conf.GetConnectionString("DefaultConnection")))
+        .AddTransient<IDbConnection>(fun _ ->
+            new Npgsql.NpgsqlConnection(conf.GetConnectionString("DefaultConnection")))
         .AddSingleton<IPersistence, Persistence>()
         .AddSingleton<IGateway>(fun ctx ->
-            // Having this here is a hack... but whatever
-            ctx.GetService<IPersistence>().Bootstrap() |> Async.RunSynchronously
             let gateway =
                 Gateway(
                     ctx.GetService<Microsoft.Extensions.Logging.ILogger<Gateway>>(),

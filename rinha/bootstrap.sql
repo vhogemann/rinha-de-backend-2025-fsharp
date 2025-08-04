@@ -1,6 +1,10 @@
-CREATE TABLE IF NOT EXISTS `transactions` (
+CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY,
-    gateway varchar(255) NOT NULL,
-    amount INT NOT NULL,
+    correlation_id UUID NOT NULL UNIQUE,
+    gateway TEXT NOT NULL,
+    amount INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);
+
+CREATE INDEX idx_gateway ON transactions (gateway);
+CREATE INDEX idx_created_at ON transactions (created_at);
