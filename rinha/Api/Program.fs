@@ -7,9 +7,19 @@ open Falco
 open Falco.Routing
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.Data.Sqlite
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
+
+
+let healthCheck : HttpHandler = fun ctx -> task {
+    let persistence = ctx.Plug<IPersistence>()
+    let! result = persistence.HealthCheck()
+    match result with
+    | Some _ -> 
+        return (Response.withStatusCode 200 >> Response.ofPlainText "OK") ctx
+    | None ->
+        return (Response.withStatusCode 503 >> Response.ofPlainText "Service Unavailable") ctx
+}
 
 let payments : HttpHandler = fun ctx -> task {
     let! request =
@@ -41,6 +51,7 @@ let main args =
     let routes = [
         post "/payments" payments
         get "/payments-summary" summary
+        get "/health" healthCheck
     ]
     
     let builder = WebApplication.CreateBuilder(args)
@@ -49,6 +60,7 @@ let main args =
         builder
             .Configuration
             .AddJsonFile("appsettings.json", optional = false, reloadOnChange = true)
+            .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional = true, reloadOnChange = true)
             .AddEnvironmentVariables()
             .Build()
     

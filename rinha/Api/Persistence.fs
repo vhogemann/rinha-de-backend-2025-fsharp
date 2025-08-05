@@ -7,6 +7,13 @@ open System.Data
 
 module Persistence =
     open Donald
+    
+    let heathCheck (conn:IDbConnection) =
+        let sql = "SELECT 1"
+        conn
+        |> Db.newCommand sql
+        |> Db.Async.querySingle (fun rd -> rd.GetInt32(0))
+    
     let savePayment (conn:IDbConnection) (gateway:string) (request: GatewayPaymentRequest) =
         let sql = """
         INSERT INTO transactions (gateway, correlation_id, amount, created_at)
@@ -72,11 +79,15 @@ module Persistence =
             return resultToSummaryResponse result
         }
 type IPersistence =
+    abstract member HealthCheck: unit -> Async<int option>
     abstract member SavePayment: string * GatewayPaymentRequest -> Async<unit>
     abstract member GetPaymentsSummary: DateTime * DateTime -> Async<PaymentsSummaryResponse>
 
 type Persistence (logger: ILogger<Persistence>, dbconn: IDbConnection) =
     interface IPersistence with
+    
+        member _.HealthCheck() =
+            Persistence.heathCheck dbconn |> Async.AwaitTask
         member _.SavePayment(gateway: string, request: GatewayPaymentRequest) =
             Persistence.savePayment dbconn gateway request |> Async.AwaitTask
         member _.GetPaymentsSummary(start: DateTime, finish: DateTime) =

@@ -1,3 +1,6 @@
+### Health check
+GET http://localhost:9999/health
+
 ### Post a payment
 POST http://localhost:9999/payments
 Content-Type: application/json
