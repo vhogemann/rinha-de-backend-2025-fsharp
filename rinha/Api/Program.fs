@@ -38,8 +38,15 @@ let payments : HttpHandler = fun ctx -> task {
 
 let summary : HttpHandler = fun ctx -> task {
     let persistence = ctx.Plug<IPersistence>()
-    let start = ctx.Request.Query.["from"] |> DateTime.Parse
-    let finish = ctx.Request.Query.["to"] |> DateTime.Parse
+    let start =
+        ctx.Request.Query.["from"] |> DateTime.TryParse |> function
+            | true, date -> date
+            | false, _ ->
+                DateTime.UtcNow.AddMinutes(-1.0)                  
+    let finish = ctx.Request.Query.["to"] |> DateTime.TryParse |> function
+        | true, date -> date
+        | false, _ ->
+            DateTime.UtcNow
     let! result = persistence.GetPaymentsSummary (start, finish)
     return Response.ofJson result ctx
 }
